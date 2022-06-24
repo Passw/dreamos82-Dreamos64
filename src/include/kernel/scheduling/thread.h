@@ -21,13 +21,6 @@ typedef enum {
     DEAD
 } thread_status;
 
-typedef struct {
-    size_t task_id;
-    char task_name[TASK_NAME_MAX_LEN];
-    struct thread_t* threads;
-    //TODO: add list of child threads
-} task_t;
-
 struct thread_t {
     uint16_t tid;
     char thread_name[THREAD_NAME_MAX_LEN];
