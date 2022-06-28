@@ -5,6 +5,7 @@
 #include <kernel/mem/bitmap.h>
 #include <vm.h>
 #include <stdio.h>
+#include <numbers.h>
 //#ifdef DEBUG - This will be uncommented when the framebuffer library will be completed
 #include <qemu.h>
 //#endif
@@ -13,9 +14,6 @@
 
 #define PIXEL uint32_t
 
-extern char _binary_fonts_default_psf_size;
-extern char _binary_fonts_default_psf_start;
-extern char _binary_fonts_default_psf_end;
 extern void *cur_framebuffer_pos;
 extern uint64_t p4_table[];
 extern uint64_t p3_table_hh[];
@@ -99,6 +97,7 @@ void map_framebuffer(struct framebuffer_info fbdata) {
 
 void set_fb_data(struct multiboot_tag_framebuffer *fbtag){
     //FRAMEBUFFER_MEM = (void*)(uint64_t)fbtag->common.framebuffer_addr;
+#if USE_FRAMEBUFFER == 1
     framebuffer_data.address = (void*)(uint64_t)_FRAMEBUFFER_MEM_START;
     framebuffer_data.pitch = fbtag->common.framebuffer_pitch;
     framebuffer_data.bpp = fbtag->common.framebuffer_bpp;
@@ -109,10 +108,11 @@ void set_fb_data(struct multiboot_tag_framebuffer *fbtag){
 
     map_framebuffer(framebuffer_data);
     cur_fb_line = 0;
+#endif
 }
 
 void _fb_putchar(char symbol, size_t cx, size_t cy, uint32_t fg, uint32_t bg){
-    uint8_t *framebuffer = (char *) framebuffer_data.address;
+    uint8_t *framebuffer = (uint8_t *) framebuffer_data.address;
     uint32_t pitch = framebuffer_data.pitch;
     uint32_t width, height;
     width = get_width(psf_font_version);
@@ -128,7 +128,8 @@ void _fb_putchar(char symbol, size_t cx, size_t cy, uint32_t fg, uint32_t bg){
         (cx * (width) * sizeof(PIXEL));
     // x,y = current coordinates on the glyph bitmap
 
-    uint32_t x, y, line, mask;
+    uint32_t x, y, line;
+    //uint32_t mask;
     for(y=0; y<height; y++){
         line = offset;
         //mask = 1 << (width - 1);
@@ -162,7 +163,7 @@ void _fb_printStr(const char *string, size_t cx, size_t cy, uint32_t fg, uint32_
 }
 
 void _fb_printStrAndNumber(const char *string, uint64_t number, size_t cx, size_t cy, uint32_t fg, uint32_t bg){
-    char *buffer[30];
+    char buffer[30];
     
     _getHexString(buffer, number, true);
     _fb_printStr(string, cx, cy, fg, bg);
@@ -185,7 +186,7 @@ void get_framebuffer_mode(uint32_t* pixels_w, uint32_t* pixels_h, uint32_t* char
     if (chars_w != NULL)
         *chars_w = framebuffer_data.width / get_width(psf_font_version);
     if (chars_h != NULL)
-        *chars_h = framebuffer_data.height / get_height(get_height);
+        *chars_h = framebuffer_data.height / get_height(psf_font_version);
 }
 
 void _fb_put_pixel(uint32_t x, uint32_t y, uint32_t color) {
@@ -197,12 +198,12 @@ void _fb_put_pixel(uint32_t x, uint32_t y, uint32_t color) {
 
 void draw_logo(uint32_t start_x, uint32_t start_y) {
     char *logo_data = header_data;
-    char *pixel[4];
-    uint32_t counter = width * height;
-    for (int i = 0; i < height; i++) {
-        for(int j = 0; j < width; j++) {
+    char pixel[4];
+    for (uint32_t i = 0; i < height; i++) {
+        for(uint32_t j = 0; j < width; j++) {
             HEADER_PIXEL(logo_data, pixel); 
-            uint32_t num = (uint32_t)pixel[0] << 24 |
+            pixel[3] = 0;
+            uint32_t num = (uint32_t) pixel[0] << 24 |
               (uint32_t)pixel[1] << 16 |
               (uint32_t)pixel[2] << 8  |
               (uint32_t)pixel[3];

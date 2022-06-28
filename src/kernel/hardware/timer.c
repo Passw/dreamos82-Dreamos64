@@ -3,13 +3,13 @@
 #include <ioapic.h>
 #include <io.h>
 #include <stddef.h>
-#include <stdio.h>
 #include <framebuffer.h>
 #include <scheduler.h>
+#include <kernel.h>
+#include <logging.h>
 
 uint8_t pit_timer_counter = 0;
 volatile uint32_t pitTicks = 0;
-extern uint32_t apic_base_address;
 uint32_t apic_calibrated_ticks;
 
 uint32_t calibrate_apic() {
@@ -46,17 +46,20 @@ uint32_t calibrate_apic() {
     uint32_t time_elapsed = ((uint32_t)-1) - current_apic_count;
     // now we want to know how many apic ticks are in 1ms so we divide per CALIBRATION_MS_TO_WAIT 
     apic_calibrated_ticks = time_elapsed / CALIBRATION_MS_TO_WAIT;
+    //Let's store the result along with the divider in the kernel_settings.
+    kernel_settings.apic_timer.timer_ticks_base = apic_calibrated_ticks;
+    kernel_settings.apic_timer.timer_divisor = APIC_TIMER_DIVIDER_2;
     // et voila... calibration done, now we can use this value as a base for the initial count register
     return apic_calibrated_ticks;
 }
 
 void start_apic_timer(uint32_t initial_count, uint32_t flags, uint8_t divider) {
 
-    if(apic_base_address == NULL) {
-        printf("Apic_base_address not found, or apic not initialized\n");
+    if(apic_base_address == 0) {
+        logline(Error, "Apic_base_address not found, or apic not initialized");
     }
 
-    printf("Read apic_register: 0x%x\n", read_apic_register(APIC_TIMER_LVT_OFFSET));
+    loglinef(Verbose, "Read apic_register: 0x%x", read_apic_register(APIC_TIMER_LVT_OFFSET));
 
     write_apic_register(APIC_TIMER_INITIAL_COUNT_REGISTER_OFFSET, initial_count);
     write_apic_register(APIC_TIMER_CONFIGURATION_OFFSET, divider);
@@ -65,13 +68,14 @@ void start_apic_timer(uint32_t initial_count, uint32_t flags, uint8_t divider) {
 }
 
 void timer_handler() {
+    scheduler_ticks++;
 #if USE_FRAMEBUFFER == 1
     if(pit_timer_counter == 0) {
         pit_timer_counter = 1;
-        _fb_printStr("*", 0, 12, 0x000000, 0xE169CD);
+        //_fb_printStr("*", 0, 12, 0x000000, 0xE169CD);
     } else {
         pit_timer_counter = 0;
-        _fb_printStr("/", 0, 12, 0x000000, 0xE169CD);
+        //_fb_printStr("/", 0, 12, 0x000000, 0xE169CD);
     }
 #endif
 
@@ -81,8 +85,6 @@ void timer_handler() {
 
 void pit_irq_handler() {
     pitTicks++;
-    scheduler_ticks++;
-    schedule();
 #if USE_FRAMEBUFFER == 1
     if(pit_timer_counter == 0) {
         pit_timer_counter = 1;

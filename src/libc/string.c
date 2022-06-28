@@ -40,6 +40,15 @@ int strcmp(const char *s1, const char *s2){
     //    return *(const unsigned char*)s1 - *(const unsigned char*)s2;
 }
 
+char *strcpy(char *dst, const char *src) {
+    char* output = dst;
+    while (*src != '\0') {
+        *output++ = *src++;
+    }
+    *output = '\0';
+    return dst;
+}
+
 void test_strcmp(){
     int result = strcmp("hello", "world");
     if(result != 0) {
