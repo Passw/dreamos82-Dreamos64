@@ -13,44 +13,50 @@ char* logLevelStrings[] = {
     "  [ERROR] ",
     "  [FATAL] ",
 };
-const size_t logLevelStrLen = 10; //all the above strings are 10 chars long (excluding null terminator)
-const size_t formatBufferLen = 256; //formatted log output limit, in characters.
+const size_t log_level_str_len = 10; //all the above strings are 10 chars long (excluding null terminator)
+const size_t format_buffer_len = 256; //formatted log output limit, in characters.
 
-size_t logDestBitmap;
-size_t logTrimLevel;
+size_t log_dest_bitmap;
+size_t log_trim_level;
+bool log_colours_enabled;
 
-size_t fbCurrentLine;
-size_t fbMaxLine;
-bool useVgaOutput;
-void init_log(size_t defaultOutputs, log_level_t trimBelowLevel, bool useVgaVideo){
-    if (defaultOutputs == LOG_OUTPUT_DONT_CARE)
-        defaultOutputs = LOG_OUTPUT_SERIAL; //default to serial
+size_t fb_current_line;
+size_t fb_max_line;
+bool use_vga_output;
+void init_log(size_t default_outputs, log_level_t trim_below_level, bool use_vga_video){
+    if (default_outputs == LOG_OUTPUT_DONT_CARE)
+        default_outputs = LOG_OUTPUT_SERIAL; //default to serial
     
-    logDestBitmap = defaultOutputs;
-    logTrimLevel = trimBelowLevel;
+    log_dest_bitmap = default_outputs;
+    log_trim_level = trim_below_level;
+    log_colours_enabled = true;
 
-    useVgaOutput = useVgaVideo;
+    use_vga_output = use_vga_video;
 
-    if (useVgaOutput) {
-        fbMaxLine = _SCR_H;
+    if (use_vga_output) {
+        fb_max_line = _SCR_H;
     }
     else {
         uint32_t pw, ph, cw, ch;
         get_framebuffer_mode(&pw, &ph, &cw, &ch);
-        fbMaxLine = ch;
+        fb_max_line = ch;
     }
 }
 
-void set_log_trim_level(size_t newTrim){
-    logTrimLevel = newTrim;
+void set_log_trim_level(size_t new_trim){
+    log_trim_level = new_trim;
+}
+
+void enable_log_colours(bool yes){
+
 }
 
 void logline(log_level_t level, const char* msg){
-    if (level < logTrimLevel)
+    if (level < log_trim_level)
         return; //dont log things that we dont want to see for now. (would be nice to store these somewhere in the future perhaps, just not display them?)
     
     for (size_t i = 0; i < LOG_OUTPUT_COUNT; i++){
-        if ((logDestBitmap & (1 << i)) == 0)
+        if ((log_dest_bitmap & (1 << i)) == 0)
             continue; //bit is cleared, we should not log there
 
         switch (1 << i){
@@ -67,20 +73,20 @@ void logline(log_level_t level, const char* msg){
                 break;
 
             case LOG_OUTPUT_FRAMEBUFFER:
-                if (useVgaOutput) {
-                    _setVgaCursorPos(0, fbCurrentLine);
+                if (use_vga_output) {
+                    _setVgaCursorPos(0, fb_current_line);
                     _printStr(logLevelStrings[level]);
                     _printStr(msg);
-                    fbCurrentLine++;
+                    fb_current_line++;
                 }
                 else {
-                    _fb_printStr(logLevelStrings[level], 0, fbCurrentLine, 0xFFFFFFFF, 0);
-                    _fb_printStr(msg, logLevelStrLen, fbCurrentLine, 0xFFFFFFFF, 0);
-                    fbCurrentLine++;
+                    _fb_printStr(logLevelStrings[level], 0, fb_current_line, 0xFFFFFFFF, 0);
+                    _fb_printStr(msg, log_level_str_len, fb_current_line, 0xFFFFFFFF, 0);
+                    fb_current_line++;
                 }
 
-                if (fbCurrentLine > fbMaxLine)
-                        fbCurrentLine = 0;
+                if (fb_current_line > fb_max_line)
+                        fb_current_line = 0;
                 break;
         
             default:
@@ -97,7 +103,7 @@ void logline(log_level_t level, const char* msg){
 
 void loglinef(log_level_t level, const char* msg, ...)
 {
-    char format_buffer[formatBufferLen];
+    char format_buffer[format_buffer_len];
     
     va_list format_args;
     va_start(format_args, msg);
