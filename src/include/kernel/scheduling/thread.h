@@ -4,8 +4,8 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <cpu.h>
+#include <task.h>
 
-#define TASK_NAME_MAX_LEN 32
 #define THREAD_NAME_MAX_LEN 32
 #define THREAD_MAX_ID (uint16_t-1)
 

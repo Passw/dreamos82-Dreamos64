@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <thread.h>
+#include <task.h>
 #include <cpu.h>
 
 #define SCHEDULER_NUMBER_OF_TICKS   0x200

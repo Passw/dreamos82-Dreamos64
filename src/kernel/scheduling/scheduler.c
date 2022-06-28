@@ -7,8 +7,7 @@
 
 uint16_t scheduler_ticks;
 size_t next_thread_id;
-size_t next_thread_index;
-
+size_t next_task_id;
 thread_t* thread_list;
 thread_t* current_executing_thread;
 thread_t* current_executing_thread;
@@ -18,8 +17,8 @@ size_t thread_list_size;
 
 void init_scheduler() {
     scheduler_ticks = 0;
-    next_thread_index = 0; 
     next_thread_id = 0;
+    next_task_id = 0;
     current_executing_thread = NULL;
     thread_list = NULL;
     idle_thread = NULL;
@@ -86,56 +85,6 @@ cpu_status_t* schedule(cpu_status_t* cur_status) {
     current_executing_thread = thread_to_execute;
     return current_executing_thread->execution_frame;
 }
-
-
-/*cpu_status_t* schedule(cpu_status_t* cur_status) {
-    // The scheduling function take as parameter the current iret_frame cur_status, and if is time to change task (ticks threshold reached)
-    // It save it to the current tax, and select a new one for execution and return the new task execution frame.
-    // If the tick threshold has not been reached it return cur_status as it is
-    thread_t *current_thread = current_executing_thread;
-
-    thread_t* prev_thread = current_executing_thread;
-
-    if (current_executing_thread->status == SLEEP) {
-        loglinef(Verbose, "Thread %d, is sleeping", current_executing_thread->tid);
-        scheduler_ticks = SCHEDULER_NUMBER_OF_TICKS;
-    }
-
-    if (scheduler_ticks != SCHEDULER_NUMBER_OF_TICKS) {
-        return cur_status;
-    }
-   // We first reset the ticks for the next task
-   scheduler_ticks = 0;
-   if (thread_list_size != 0) {
-        loglinef(Verbose, "prev_thread status: %d", prev_thread->status);
-        if (prev_thread->status != NEW) {
-            prev_thread->execution_frame = cur_status;
-        }
-        
-        if (prev_thread->status == DEAD) {
-            scheduler_delete_thread(prev_thread->tid);
-        } else if(prev_thread->status != SLEEP) {
-            prev_thread->status = READY;
-        }
-        current_executing_thread = scheduler_get_next_thread();       
-        while (current_executing_thread->status == SLEEP) {
-            loglinef(Verbose, "current_executing_thread->wakeup_time: %d - current_uptime: %d", current_executing_thread->wakeup_time, get_kernel_uptime());
-            if(!(get_kernel_uptime() > current_executing_thread->wakeup_time)) {
-                current_executing_thread = scheduler_get_next_thread();
-            } else {
-                break;
-            }
-        }
-        
-        loglinef(Verbose, "- new_thread is: %d, old thread is: %d - status: %d", current_executing_thread->tid, prev_thread->tid, current_executing_thread->status);
-        if (current_executing_thread != NULL && prev_thread->tid != current_executing_thread->tid) {
-            loglinef(Verbose, "Picked task: %d, name: %s - prev_thread tid: %d", current_executing_thread->tid, current_executing_thread->thread_name, prev_thread->tid);
-            current_executing_thread->status = RUN;
-            return current_executing_thread->execution_frame;
-        }
-   }
-   return cur_status;
-}*/
 
 void scheduler_add_thread(thread_t* thread) {
     thread->next = thread_list;    
