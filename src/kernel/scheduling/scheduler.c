@@ -12,6 +12,7 @@ thread_t* thread_list;
 thread_t* current_executing_thread;
 thread_t* current_executing_thread;
 thread_t* idle_thread;
+task_t* task_list; 
 
 size_t thread_list_size;
 

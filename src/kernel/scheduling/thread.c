@@ -7,10 +7,10 @@
 #include <logging.h>
 #include <kernel.h>
 
-thread_t* create_thread(char* thread_name, void (*_entry_point)(void *), void* arg) {
+thread_t* create_thread(char* thread_name, task_t* parent_task, void (*_entry_point)(void *), void* arg) {
     thread_t *new_thread = kmalloc(sizeof(thread_t));
     new_thread->tid = next_thread_id++;
-    new_thread->parent = NULL;
+    new_thread->parent = parent_task;
     new_thread->status = NEW;
     new_thread->wakeup_time = 0;
     strcpy(new_thread->thread_name, thread_name);

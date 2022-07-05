@@ -197,10 +197,10 @@ void kernel_start(unsigned long addr, unsigned long magic){
     char a = 'a';
     char b = 'b';
     char c = 'c';
-    idle_thread = create_thread("idle", noop,  &a);
-    create_thread("eldi", noop2, &b);
-    create_thread("ledi", noop2, &c);
-    create_thread("sleeper", noop3, &c);
+    idle_thread = create_thread("idle", NULL, noop,  &a);
+    create_thread("eldi", NULL , noop2, &b);
+    create_thread("ledi", NULL, noop2, &c);
+    create_thread("sleeper", NULL, noop3, &c);
     //execute_runtime_tests();
     start_apic_timer(kernel_settings.apic_timer.timer_ticks_base, APIC_TIMER_SET_PERIODIC, kernel_settings.apic_timer.timer_divisor);
     while(1);
