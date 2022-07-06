@@ -5,8 +5,17 @@
 #include <stddef.h>
 #include <multiboot.h>
 
-
 #define _FRAMEBUFFER_MEM_START 0xffffffffbd000000
+
+typedef struct {
+    uint8_t red_offset;
+    uint8_t green_offset;
+    uint8_t blue_offset;
+
+    uint8_t red_mask;
+    uint8_t green_mask;
+    uint8_t blue_mask;
+} framebuffer_pixel_format;
 
 typedef struct framebuffer_info {
     void *address;
@@ -17,6 +26,8 @@ typedef struct framebuffer_info {
     uint32_t height;
 
     uint64_t phys_address;
+
+    framebuffer_pixel_format format;
 } framebuffer_info;
 
 void _fb_putchar(char symbol, size_t cx, size_t cy, uint32_t fg, uint32_t bg);

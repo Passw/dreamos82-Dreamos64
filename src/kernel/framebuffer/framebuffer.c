@@ -105,6 +105,13 @@ void set_fb_data(struct multiboot_tag_framebuffer *fbtag){
     framebuffer_data.width = fbtag->common.framebuffer_width;
     framebuffer_data.height = fbtag->common.framebuffer_height;
     framebuffer_data.phys_address = fbtag->common.framebuffer_addr;
+    
+    framebuffer_data.format.red_offset = fbtag->framebuffer_red_field_position;
+    framebuffer_data.format.green_offset = fbtag->framebuffer_green_field_position;
+    framebuffer_data.format.blue_offset = fbtag->framebuffer_blue_field_position;
+    framebuffer_data.format.red_mask = (1 << fbtag->framebuffer_red_mask_size) - 1;
+    framebuffer_data.format.green_mask = (1 << fbtag->framebuffer_green_mask_size) - 1;
+    framebuffer_data.format.blue_mask = (1 << fbtag->framebuffer_blue_mask_size) - 1;
 
     map_framebuffer(framebuffer_data);
     cur_fb_line = 0;
