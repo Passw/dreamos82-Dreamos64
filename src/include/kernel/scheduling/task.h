@@ -14,11 +14,13 @@ typedef struct task_t {
     struct thread_t* threads;
     //TODO: add list of child threads
     
+    struct task_t* parent;
+    
     struct task_t* next;
 } task_t;
 
 extern size_t next_task_id;
 
-task_t* create_task(char *name, struct thread_t* thread);
+int create_task(char *name, struct thread_t* thread);
 
 #endif

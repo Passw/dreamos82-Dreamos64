@@ -12,18 +12,65 @@ thread_t* thread_list;
 thread_t* current_executing_thread;
 thread_t* current_executing_thread;
 thread_t* idle_thread;
-task_t* task_list; 
+task_queue_t task_q;
+
+//task_t* task_list_head;
+//task_t* task_list_tail;
 
 size_t thread_list_size;
+//size_t task_list_size;
 
 void init_scheduler() {
     scheduler_ticks = 0;
     next_thread_id = 0;
     next_task_id = 0;
     current_executing_thread = NULL;
+    //task_q.tail = task_q.head = NULL;
+    //task_list_size = 0;
     thread_list = NULL;
     idle_thread = NULL;
     thread_list_size = 0;
+    task_q.head = NULL;
+    task_q.tail = NULL;
+    task_q.size = 0;
+}
+
+
+void scheduler_add_task(task_t* task) {
+    if (task_q.head == NULL) {
+        task_q.head = task;
+        task_q.tail = task;
+        task_q.size = task_q.size + 1;
+        return;
+    }
+    
+    task_q.tail->next = task;
+    task_q.tail = task;
+    task_q.size = task_q.size + 1;
+}
+
+task_t* scheduler_get_task() {
+
+    if (task_q.size == 0) {
+        return NULL;
+    }
+    
+    selected_task = task_q.head;
+    task_q.head = selected_task.head->next;
+    task_q.size = task_q.size - 1;
+    return selected_task;
+}
+
+void scheduler_add_thread(thread_t* thread) {
+    thread->next = thread_list;    
+    thread_list_size++;
+    thread_list = thread;
+    loglinef(Verbose, "Adding thread: %s - %d", thread_list->thread_name, thread_list->tid);
+    if (current_executing_thread == NULL) {
+        //This means that there are no tasks on the queue yet.
+        current_executing_thread = thread;
+        loglinef(Verbose, "Selected thread is: %d", current_executing_thread->tid);
+    }
 }
 
 cpu_status_t* schedule(cpu_status_t* cur_status) {
@@ -62,7 +109,7 @@ cpu_status_t* schedule(cpu_status_t* cur_status) {
 
     while (current_thread->tid != prev_thread_tid) {
         if (current_thread->status == SLEEP) {
-            //loglinef(Verbose, "Current uptime: %d - wakeup: %d", get_kernel_uptime(), current_thread->wakeup_time);
+            loglinef(Verbose, "Current uptime: %d - wakeup: %d", get_kernel_uptime(), current_thread->wakeup_time);
             if ( get_kernel_uptime() > current_thread->wakeup_time) {
                 current_thread->status = READY;
                 thread_to_execute = current_thread;
@@ -77,27 +124,18 @@ cpu_status_t* schedule(cpu_status_t* cur_status) {
             break;
         }
         prev_thread_tid = current_thread->tid;
-        current_thread = scheduler_get_next_thread();        
+        loglinef(Verbose, "Prev_thread tid: %d - Current_th tid: %d - current_thread->status: %d", prev_thread_tid, current_thread->tid, current_thread->status);
+        current_thread = scheduler_get_next_thread(); 
+        loglinef(Verbose, "Prev_thread tid: %d - Current_th tid: %d - current_thread->status: %d", prev_thread_tid, current_thread->tid, current_thread->status);
     }
 
-    //loglinef(Verbose, "Picked thread: %d - %s list size: %d", thread_to_execute->tid, thread_to_execute->thread_name, thread_list_size);
+    loglinef(Verbose, "Picked thread: %d - %s list size: %d", thread_to_execute->tid, thread_to_execute->thread_name, thread_list_size);
     thread_to_execute->status = RUN;
     thread_to_execute->ticks = 0;
     current_executing_thread = thread_to_execute;
     return current_executing_thread->execution_frame;
 }
 
-void scheduler_add_thread(thread_t* thread) {
-    thread->next = thread_list;    
-    thread_list_size++;
-    thread_list = thread;
-    loglinef(Verbose, "Adding thread: %s - %d", thread_list->thread_name, thread_list->tid);
-    if (current_executing_thread == NULL) {
-        //This means that there are no tasks on the queue yet.
-        current_executing_thread = thread;
-        loglinef(Verbose, "Selected thread is: %d", current_executing_thread->tid);
-    }
-}
 
 void scheduler_delete_thread(size_t thread_id) {
     loglinef(Verbose, "Called with thread id: %d", thread_id);
@@ -140,6 +178,7 @@ thread_t* scheduler_get_next_thread() {
         return thread_list;
     }
     if (current_executing_thread->next == NULL) {
+        loglinef(Verbose, "next_thread is null - tl tid: %d", thread_list->tid);
         return thread_list;
     }
     return current_executing_thread->next;    

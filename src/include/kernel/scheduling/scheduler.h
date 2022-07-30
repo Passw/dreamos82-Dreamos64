@@ -9,15 +9,26 @@
 #define SCHEDULER_NUMBER_OF_TICKS   0x200
 #define SCHEDULER_MAX_THREAD_NUMBER 0x10
 
+typedef struct task_queue_t {
+    task_t* head;
+    task_t* tail;
+
+    size_t size;
+} task_queue_t;
+
 extern uint16_t scheduler_ticks;
 extern thread_t* current_executing_thread;
 extern thread_t* idle_thread;
-
+extern task_queue_t task_q;
 void init_scheduler();
 cpu_status_t* schedule(cpu_status_t* cur_status);
+
 void scheduler_add_thread(thread_t* thread);
+void scheduler_add_task(task_t* task);
+
 thread_t* scheduler_get_next_thread();
 size_t scheduler_get_queue_size();
+
 void scheduler_delete_thread(size_t tid);
 void scheduler_yield();
 #endif

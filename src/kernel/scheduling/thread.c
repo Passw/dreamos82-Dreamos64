@@ -7,7 +7,7 @@
 #include <logging.h>
 #include <kernel.h>
 
-thread_t* create_thread(char* thread_name, task_t* parent_task, void (*_entry_point)(void *), void* arg) {
+int create_thread(char* thread_name, task_t* parent_task, void (*_entry_point)(void *), void* arg) {
     thread_t *new_thread = kmalloc(sizeof(thread_t));
     new_thread->tid = next_thread_id++;
     new_thread->parent = parent_task;
@@ -36,7 +36,8 @@ thread_t* create_thread(char* thread_name, task_t* parent_task, void (*_entry_po
     new_thread->execution_frame->rsp = (uint64_t) new_thread->stack;
     
     scheduler_add_thread(new_thread);
-    return new_thread;
+    // If return value is 0 it means the thread was created succesfully
+    return 0;
 }
 
 void thread_sleep(size_t millis) {
